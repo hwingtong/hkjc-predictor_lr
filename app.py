@@ -55,7 +55,7 @@ if os.path.exists(model_path) and os.path.exists(scaler_path):
     with col1:
         distance = st.selectbox("Distance (m)", [1000, 1200, 1400, 1600, 1650, 1800, 2000, 2200, 2400])
         actual_weight = st.number_input("Horse Weight (lbs)", value=120.0)
-        j_name = st.selectbox("Search/Select Jockey", options=sorted(list(JOCKEY_WIN_RATES.keys())) + ["Others"])
+        j_name = st.selectbox("Jockey Name", options=sorted(list(JOCKEY_WIN_RATES.keys())) + ["Others"])
         j_rate = JOCKEY_WIN_RATES.get(j_name, MEAN_WIN_RATE)
     with col2:
         days_since = st.number_input("Days Since Last Run", value=14)
