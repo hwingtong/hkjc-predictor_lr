@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import numpy as np
 import os
 import statsmodels.api as sm
+import numpy as np
 
 # --- 1. JOCKEY WIN RATE DATABASE ---
 JOCKEY_WIN_RATES = {
@@ -32,9 +32,9 @@ def get_lbw_input(label_id):
         choice = st.selectbox("Select Margin", ["N", "SH", "HD", "NK"], key=f"small_{label_id}")
         return conversion_dict[choice]
     else:
-        c1, c2 = st.columns(2)
+        c1, col_f = st.columns(2)
         with c1: w = st.number_input("Whole", 0, 80, 0, key=f"w_{label_id}")
-        with c2:
+        with col_f:
             f_map = {"0": 0.0, "1/4": 0.25, "1/2": 0.5, "3/4": 0.75}
             f_choice = st.selectbox("Fraction", list(f_map.keys()), key=f"f_{label_id}")
             return float(w) + f_map[f_choice]
@@ -57,7 +57,6 @@ if os.path.exists(model_path) and os.path.exists(scaler_path):
         actual_weight = st.number_input("Horse Weight (lbs)", value=120.0)
         j_name = st.selectbox("Search/Select Jockey", options=sorted(list(JOCKEY_WIN_RATES.keys())) + ["Others"])
         j_rate = JOCKEY_WIN_RATES.get(j_name, MEAN_WIN_RATE)
-        st.caption(f"Model will use Win Rate: {j_rate:.6f}")
     with col2:
         days_since = st.number_input("Days Since Last Run", value=14)
         barrier = st.slider("Barrier (Draw)", 1, 14, 7)
@@ -78,7 +77,7 @@ if os.path.exists(model_path) and os.path.exists(scaler_path):
         calc_p3r_dist = (top3_count / 3.0) * distance
         calc_rel_weight_dist = (actual_weight / 120.0) * distance
 
-        # --- PREPARE DATA ---
+        # --- PREPARE DATA (7 Features) ---
         data = {
             'P3R_Top3_Pct_x_Dist': float(calc_p3r_dist),
             'P3R_Avg_LBW': float(avg_lbw),
@@ -89,7 +88,7 @@ if os.path.exists(model_path) and os.path.exists(scaler_path):
             'Class_Change': float(class_move)
         }
         
-        # MUST MATCH TRAINING ORDER
+        # Order must match the order during scaler.fit()
         feature_order = [
             'P3R_Top3_Pct_x_Dist', 'P3R_Avg_LBW', 'Days_Since_Last_Run', 
             'Rel_Weight_x_Dist', 'Barrier_Rank', 'Jockey_Strike_Rate_Sea', 'Class_Change'
@@ -99,31 +98,34 @@ if os.path.exists(model_path) and os.path.exists(scaler_path):
 
         # --- SCALE & PREDICT ---
         try:
-            # Bypass Name Check by using .values
-            scaled_array = scaler.transform(input_df.values)
-            input_df_scaled = pd.DataFrame(scaled_array, columns=feature_order)
+            # 1. Transform using raw values to bypass feature name validation
+            scaled_values = scaler.transform(input_df.values)
             
-            # Add Intercept for Statsmodels
+            # 2. Reconstruct DataFrame with scaled values
+            input_df_scaled = pd.DataFrame(scaled_values, columns=feature_order)
+            
+            # 3. Add Intercept (Constant)
             input_df_final = sm.add_constant(input_df_scaled, has_constant='add')
 
-            # Run Model
+            # 4. Predict using Statsmodels logic
             prob = model.predict(input_df_final).iloc[0]
             
-            # Display Results
+            # 5. UI Result
             if prob >= 0.5:
                 st.success(f"PROBABLE TOP 3 (Confidence: {prob:.2%})")
             else:
                 st.warning(f"OUTSIDE TOP 3 (Confidence: {1-prob:.2%})")
             
-            # --- DEBUG PANEL ---
-            with st.expander("🛠️ Deep Debugging Panel"):
-                st.write("**Scaled Input Data:**", input_df_scaled)
+            with st.expander("🛠️ Final Debugging Check"):
+                st.write("If you still see 100%, the new scaler hasn't been uploaded yet.")
+                st.write("**Scaled Inputs:**", input_df_scaled)
                 z = (model.params.values * input_df_final.values).sum()
                 st.write(f"**Current Z-Value:** {z:.4f}")
-                st.write("**Coefficients:**", model.params)
-                st.info("Success! Z-value is now normalized thanks to scaling.")
 
+        except ValueError as ve:
+            st.error(f"Feature Mismatch: {ve}")
+            st.info("The scaler file you uploaded still thinks there should be 10 features. Please re-run the 'clean_scaler' code in your notebook and upload the new 'scaler.pkl'.")
         except Exception as e:
-            st.error(f"Prediction Error: {e}")
+            st.error(f"An unexpected error occurred: {e}")
 else:
-    st.error("Missing Files! Please ensure 'logistic_regression_model.pkl' AND 'scaler.pkl' are in your GitHub repo.")
+    st.error("Wait! You must have both 'logistic_regression_model.pkl' AND 'scaler.pkl' in your GitHub folder.")
