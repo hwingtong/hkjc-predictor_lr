@@ -1,6 +1,6 @@
-joblib
 streamlit
 pandas
+joblib
+scikit-learn
 numpy
-scikit-learn==1.6.1
 statsmodels
