@@ -64,7 +64,7 @@ if os.path.exists(model_path) and os.path.exists(scaler_path):
                                   format_func=lambda x: "Down" if x==-1 else ("Up" if x==1 else "Same"))
 
     st.markdown("---")
-    st.subheader("2. Information on Results of Past 3 Runs")
+    st.subheader("2. Information on Results of Past 3 Runs - Lengths Behind Winner (LBW)")
     p1, p2, p3 = st.columns(3)
     with p1: lbw1 = get_lbw_input("Race 1 (Latest)"); res1 = st.checkbox("Top 3?", key="res1")
     with p2: lbw2 = get_lbw_input("Race 2"); res2 = st.checkbox("Top 3?", key="res2")
@@ -115,12 +115,7 @@ if os.path.exists(model_path) and os.path.exists(scaler_path):
                 st.success(f"PROBABLE TOP 3 (Confidence: {prob:.2%})")
             else:
                 st.warning(f"OUTSIDE TOP 3 (Confidence: {1-prob:.2%})")
-            
-            with st.expander("🛠️ Final Debugging Check"):
-                st.write("If you still see 100%, the new scaler hasn't been uploaded yet.")
-                st.write("**Scaled Inputs:**", input_df_scaled)
-                z = (model.params.values * input_df_final.values).sum()
-                st.write(f"**Current Z-Value:** {z:.4f}")
+
 
         except ValueError as ve:
             st.error(f"Feature Mismatch: {ve}")
