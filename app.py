@@ -41,7 +41,7 @@ def get_lbw_input(label_id):
 
 # --- 3. PAGE SETUP & LOADING ---
 st.set_page_config(page_title="HKJC Predictor", layout="wide")
-st.title("🏇 HKJC Logistic Regression Predictor")
+st.title("🏇 HKJC Horse Racing Results Predictor")
 
 model_path = 'lasso_lr_model.pkl'
 scaler_path = 'standard_scaler.pkl'
@@ -50,7 +50,7 @@ if os.path.exists(model_path) and os.path.exists(scaler_path):
     model = joblib.load(model_path)
     scaler = joblib.load(scaler_path)
     
-    st.subheader("1. Race & Jockey Information")
+    st.subheader("1. Current Race & Jockey Information")
     col1, col2 = st.columns(2)
     with col1:
         distance = st.selectbox("Distance (m)", [1000, 1200, 1400, 1600, 1650, 1800, 2000, 2200, 2400])
@@ -64,7 +64,7 @@ if os.path.exists(model_path) and os.path.exists(scaler_path):
                                   format_func=lambda x: "Down" if x==-1 else ("Up" if x==1 else "Same"))
 
     st.markdown("---")
-    st.subheader("2. Past 3 Runs (LBW)")
+    st.subheader("2. Information on Results of Past 3 Runs")
     p1, p2, p3 = st.columns(3)
     with p1: lbw1 = get_lbw_input("Race 1 (Latest)"); res1 = st.checkbox("Top 3?", key="res1")
     with p2: lbw2 = get_lbw_input("Race 2"); res2 = st.checkbox("Top 3?", key="res2")
