@@ -44,7 +44,7 @@ st.set_page_config(page_title="HKJC Predictor", layout="wide")
 st.title("🏇 HKJC Logistic Regression Predictor")
 
 model_path = 'lasso_lr_model.pkl'
-scaler_path = 'scaler.pkl'
+scaler_path = 'standard_scaler.pkl'
 
 if os.path.exists(model_path) and os.path.exists(scaler_path):
     model = joblib.load(model_path)
